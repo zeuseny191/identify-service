@@ -12,8 +12,8 @@ import com.phong.identify_service.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +38,6 @@ public class UserService {
 
         HashSet<String> roles = new HashSet<>();
         roles.add(Role.USER.name());
-
         user.setRoles(roles);
 
         return userMapper.toUserResponse(userRepository.save(user));
@@ -51,6 +50,10 @@ public class UserService {
     public UserResponse getUserById(String id){
         return userMapper.toUserResponse(userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found")));
+    }
+
+    public Page<User> searchUsersByName(String searchParams, Pageable pageable){
+        return userRepository.searchByName(searchParams.trim(), pageable);
     }
 
     public UserResponse updateUser(String userId, UserUpdateRequest request){

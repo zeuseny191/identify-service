@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 
 @Slf4j
@@ -29,10 +30,14 @@ public class ApplicationInitConfig {
             if (userRepository.findByUsername("admin").isEmpty()) {
                 var roles = new HashSet<String>();
                 roles.add(Role.ADMIN.name());
+                LocalDate dob = LocalDate.of(2001,1,19);
 
                 User admin = User.builder()
                         .username("admin")
                         .password(passwordEncoder.encode("admin"))
+                        .dob(dob)
+                        .firstName("admin")
+                        .lastName("admin")
                         .roles(roles)
                         .build();
 

@@ -11,6 +11,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,28 +35,48 @@ public class UserController {
     }
 
     @GetMapping
-    List<User> getUsers(){
+    ApiResponse<List<User>> getUsers(){
+        ApiResponse<List<User>> apiResponse = new ApiResponse<>();
+
         var authentication =  SecurityContextHolder.getContext().getAuthentication();
 
         log.info("username: {}", authentication.getName());
         authentication.getAuthorities().forEach(grantedAuthority -> log.info(grantedAuthority.toString()));
 
-        return userService.getUsers();
+        apiResponse.setResult(userService.getUsers());
+        return apiResponse;
     }
 
     @GetMapping("/{userId}")
-    UserResponse getUserById(@PathVariable("userId") String userId){
-        return userService.getUserById(userId);
+    ApiResponse<UserResponse> getUserById(@PathVariable("userId") String userId){
+        ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(userService.getUserById(userId));
+        return apiResponse;
     }
 
     @PutMapping("/{userId}")
-    UserResponse updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest request){
-        return userService.updateUser(userId, request);
+    ApiResponse<UserResponse> updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest request){
+        ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(userService.updateUser(userId, request));
+        return apiResponse;
     }
 
     @DeleteMapping("/{userId}")
-    String deleteUser(@PathVariable("userId") String userId){
+    ApiResponse<Object> deleteUser(@PathVariable("userId") String userId){
+        ApiResponse<Object> apiResponse = new ApiResponse<>();
         userService.deleteUserById(userId);
-        return "User has been deleted!";
+        apiResponse.setMessage("User has been deleted!");
+        apiResponse.setResult(null);
+        return apiResponse;
+    }
+
+    @GetMapping("/search")
+    ApiResponse<Page<User>> searchUsers(@RequestParam(value = "name", required = false) String name,
+                                        @RequestParam(value = "page", required = false) int page,
+                                        @RequestParam(value = "size", required = false) int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        ApiResponse<Page<User>> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(userService.searchUsersByName(name, pageable));
+        return apiResponse;
     }
 }
