@@ -29,7 +29,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.StringJoiner;
 
 @Slf4j
@@ -63,7 +62,6 @@ public class AuthenticationService {
     public AuthenticationResponse authenticate(AuthenticationRequest request){
         var user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        String roles = (new ArrayList<>(user.getRoles())).getFirst();
 
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
@@ -76,7 +74,7 @@ public class AuthenticationService {
                 .token(token)
                 .authenticated(true)
                 .userId(user.getId())
-                .roles(roles)
+                .roles(user.getRoles())
                 .build();
     }
 
@@ -87,7 +85,7 @@ public class AuthenticationService {
                 .issuer("identify.com")
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()))
-                .claim("scope", buildScope(user))
+                .claim("scope", user.getRoles())
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
         JWSObject jwsObject = new JWSObject(header, payload);
@@ -99,13 +97,5 @@ public class AuthenticationService {
             System.out.println("Cannot create token");
             throw new RuntimeException(e);
         }
-    }
-
-    private String buildScope(User user) {
-        StringJoiner stringJoiner = new StringJoiner(" ");
-        if (!CollectionUtils.isEmpty(user.getRoles()))
-            user.getRoles().forEach(stringJoiner::add);
-
-        return stringJoiner.toString();
     }
 }

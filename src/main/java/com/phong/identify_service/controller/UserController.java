@@ -1,5 +1,6 @@
 package com.phong.identify_service.controller;
 
+import com.github.pagehelper.PageInfo;
 import com.phong.identify_service.dto.request.ApiResponse;
 import com.phong.identify_service.dto.request.UserCreationRequest;
 import com.phong.identify_service.dto.request.UserUpdateRequest;
@@ -71,12 +72,12 @@ public class UserController {
     }
 
     @GetMapping("/search")
-    ApiResponse<Page<User>> searchUsers(@RequestParam(value = "name", required = false) String name,
-                                        @RequestParam(value = "page", required = false) int page,
-                                        @RequestParam(value = "size", required = false) int size) {
+    ApiResponse<PageInfo<User>> searchUsers(@RequestParam(value = "name", required = false) String searchTerm,
+                                            @RequestParam(value = "page", required = false) int page,
+                                            @RequestParam(value = "size", required = false) int size) {
         Pageable pageable = PageRequest.of(page, size);
-        ApiResponse<Page<User>> apiResponse = new ApiResponse<>();
-        apiResponse.setResult(userService.searchUsersByName(name, pageable));
+        ApiResponse<PageInfo<User>> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(userService.searchByName(searchTerm, pageable));
         return apiResponse;
     }
 }

@@ -14,5 +14,12 @@ spring:
       ddl-auto: update
     show-sql: true
 
+mybatis:
+  mapper-locations: "classpath:mappers/*.xml"
+  type-aliases-package: "com.phong.identify_service.entity"
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
 jwt:
   signerKey: "cQk9bALPSDufXzWjCgkNAnJ1jUSVgDM0omqPmsnRs77H9kez1icEJ8F6NYWLaWgM"

@@ -1,5 +1,7 @@
 package com.phong.identify_service.service;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.phong.identify_service.dto.request.UserCreationRequest;
 import com.phong.identify_service.dto.request.UserUpdateRequest;
 import com.phong.identify_service.dto.response.UserResponse;
@@ -12,14 +14,14 @@ import com.phong.identify_service.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.domain.Page;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -36,11 +38,12 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        HashSet<String> roles = new HashSet<>();
-        roles.add(Role.USER.name());
-        user.setRoles(roles);
+        user.setRoles(Role.USER.name());
+        int amount = userRepository.insertUser(user);
 
-        return userMapper.toUserResponse(userRepository.save(user));
+        log.info("Số lượng record created: {}", amount);
+
+        return userMapper.toUserResponse(user);
     }
 
     public List<User> getUsers() {
@@ -48,23 +51,32 @@ public class UserService {
     }
 
     public UserResponse getUserById(String id){
-        return userMapper.toUserResponse(userRepository.findById(id)
+        return userMapper.toUserResponse(userRepository.findUserById(id)
                 .orElseThrow(() -> new RuntimeException("User not found")));
     }
 
-    public Page<User> searchUsersByName(String searchParams, Pageable pageable){
-        return userRepository.searchByName(searchParams.trim(), pageable);
+    public PageInfo<User> searchByName(String searchTerm, Pageable pageable) {
+        PageHelper.startPage(pageable.getPageNumber(), pageable.getPageSize());
+
+        List<User> userList = userRepository.searchByName(searchTerm);
+
+        return new PageInfo<>(userList);
     }
 
     public UserResponse updateUser(String userId, UserUpdateRequest request){
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findUserById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
         userMapper.updateUser(user, request);
+        int amount = userRepository.updateUser(user);
 
-        return userMapper.toUserResponse(userRepository.save(user));
+        log.info("Số lượng record updated: {}", amount);
+
+        return userMapper.toUserResponse(user);
     }
 
     public void deleteUserById(String userId){
-        userRepository.deleteById(userId);
+        int amount = userRepository.deleteById(userId);
+
+        log.info("Số lượng record deleted: {}", amount);
     }
 }

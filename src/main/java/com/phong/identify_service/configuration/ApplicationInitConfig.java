@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Optional;
 
 @Slf4j
 @Configuration
@@ -22,7 +23,7 @@ import java.util.HashSet;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ApplicationInitConfig {
 
-    private PasswordEncoder passwordEncoder;
+    PasswordEncoder passwordEncoder;
 
     @Bean
     @ConditionalOnProperty(prefix = "spring.datasource",
@@ -32,8 +33,6 @@ public class ApplicationInitConfig {
         log.info("App: Init application");
         return args -> {
             if (userRepository.findByUsername("admin").isEmpty()) {
-                var roles = new HashSet<String>();
-                roles.add(Role.ADMIN.name());
                 LocalDate dob = LocalDate.of(2001,1,19);
 
                 User admin = User.builder()
@@ -42,10 +41,10 @@ public class ApplicationInitConfig {
                         .dob(dob)
                         .firstName("admin")
                         .lastName("admin")
-                        .roles(roles)
+                        .roles(Role.ADMIN.name())
                         .build();
 
-                userRepository.save(admin);
+                userRepository.insertUser(admin);
                 log.warn("admin user has been created with default password: admin, please change it");
             }
         };
