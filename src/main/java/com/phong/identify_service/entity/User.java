@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.sql.Date;
 import java.time.LocalDate;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -24,6 +24,6 @@ public class User {
     String password;
     String firstName;
     String lastName;
-    LocalDate dob;
+    Date dob;
     String roles;
 }

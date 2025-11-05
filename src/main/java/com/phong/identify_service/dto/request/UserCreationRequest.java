@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -22,5 +23,5 @@ public class UserCreationRequest {
     String password;
     String firstName;
     String lastName;
-    LocalDate dob;
+    Date dob;
 }

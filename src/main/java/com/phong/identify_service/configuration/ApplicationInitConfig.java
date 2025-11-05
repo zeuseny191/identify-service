@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Optional;
@@ -33,7 +34,7 @@ public class ApplicationInitConfig {
         log.info("App: Init application");
         return args -> {
             if (userRepository.findByUsername("admin").isEmpty()) {
-                LocalDate dob = LocalDate.of(2001,1,19);
+                Date dob = Date.valueOf("2001-01-19");
 
                 User admin = User.builder()
                         .username("admin")

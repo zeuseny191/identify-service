@@ -12,12 +12,18 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jasperreports.engine.JRException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.FileNotFoundException;
 import java.util.List;
 
 @Slf4j
@@ -79,5 +85,49 @@ public class UserController {
         ApiResponse<PageInfo<User>> apiResponse = new ApiResponse<>();
         apiResponse.setResult(userService.searchByName(searchTerm, pageable));
         return apiResponse;
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> downloadReport(@RequestParam(value = "format", required = false) String format,
+                                                 @RequestParam(value = "name", required = false) String searchTerm) {
+        try {
+            // Gọi Service để tạo báo cáo (dạng byte array)
+            byte[] reportBytes = userService.exportReport(format, searchTerm);
+
+            if (reportBytes == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Định dạng báo cáo không hợp lệ.".getBytes());
+            }
+
+            // Thiết lập Headers cho Response
+            HttpHeaders headers = new HttpHeaders();
+
+            // Đặt tên file và loại nội dung
+            String fileName = "danh_sach_nguoi_dung." + format.toLowerCase();
+            MediaType contentType = MediaType.APPLICATION_PDF; // Giả định là PDF
+
+            if (format.equalsIgnoreCase("pdf")) {
+                contentType = MediaType.APPLICATION_PDF;
+            } else if (format.equalsIgnoreCase("html")) {
+                contentType = MediaType.TEXT_HTML;
+                // Thêm logic xử lý HTML nếu cần
+            }
+
+            headers.setContentDispositionFormData("attachment", fileName);
+            headers.setContentType(contentType);
+            headers.setContentLength(reportBytes.length);
+
+            // Trả về file báo cáo
+            return new ResponseEntity<>(reportBytes, headers, HttpStatus.OK);
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy template báo cáo.".getBytes());
+        } catch (JRException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi trong quá trình tạo báo cáo Jasper.".getBytes());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi hệ thống không xác định.".getBytes());
+        }
     }
 }
