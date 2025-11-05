@@ -17,6 +17,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,9 +27,11 @@ import org.springframework.util.CollectionUtils;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.StringJoiner;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -70,6 +73,8 @@ public class AuthenticationService {
         return AuthenticationResponse.builder()
                 .token(token)
                 .authenticated(true)
+                .userId(user.getId())
+                .roles(user.getRoles())
                 .build();
     }
 
@@ -80,7 +85,7 @@ public class AuthenticationService {
                 .issuer("identify.com")
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()))
-                .claim("scope", buildScope(user))
+                .claim("scope", user.getRoles())
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
         JWSObject jwsObject = new JWSObject(header, payload);
@@ -92,13 +97,5 @@ public class AuthenticationService {
             System.out.println("Cannot create token");
             throw new RuntimeException(e);
         }
-    }
-
-    private String buildScope(User user) {
-        StringJoiner stringJoiner = new StringJoiner(" ");
-        if (!CollectionUtils.isEmpty(user.getRoles()))
-            user.getRoles().forEach(stringJoiner::add);
-
-        return stringJoiner.toString();
     }
 }
